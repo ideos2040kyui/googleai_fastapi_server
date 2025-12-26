@@ -3,11 +3,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
+from dotenv import load_dotenv
+
+# .envファイルから環境変数を読み込む
+load_dotenv()
 
 # 環境変数からAPIキーを取得
 GENAI_API_KEY = os.getenv("GENAI_API_KEY")
 if not GENAI_API_KEY:
-    raise ValueError("GENAI_API_KEY environment variable is not set")
+    print("WARNING: GENAI_API_KEY environment variable is not set")
+    GENAI_API_KEY = "dummy_key"  # ダミーキーでサーバー起動を許可
 
 # GenAIクライアントを初期化
 client = genai.Client(api_key=GENAI_API_KEY)
