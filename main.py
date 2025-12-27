@@ -1,14 +1,23 @@
 import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
+load_dotenv()  # .env ファイルから環境変数を読み込む
 
 # 環境変数からAPIキーを取得
 GENAI_API_KEY = os.getenv("GENAI_API_KEY")
 if not GENAI_API_KEY:
     print("WARNING: GENAI_API_KEY environment variable is not set")
     GENAI_API_KEY = "dummy_key"  # ダミーキーでサーバー起動を許可
+
+# CORS設定用のオリジンを環境変数から取得（デフォルトはlocalhost）
+default_origins = [
+    "http://localhost",
+    "http://127.0.0.1",
+]
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
 
 # GenAIクライアントを初期化
 client = genai.Client(api_key=GENAI_API_KEY)
@@ -18,7 +27,7 @@ app = FastAPI(title="GenAI FastAPI Server")
 # CORS設定（必要に応じて調整）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,4 +76,5 @@ def generate_text(request: GenerateRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port="8080")
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
