@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from google import genai
 load_dotenv()  # .env ファイルから環境変数を読み込む
@@ -18,6 +19,11 @@ default_origins = [
     "http://127.0.0.1",
 ]
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
+
+# HTTP Basic認証用の認証情報
+AUTH_USERNAME = os.getenv("AUTH_USERNAME", "admin")
+AUTH_PASSWORD = os.getenv("AUTH_PASSWORD", "password")
+security = HTTPBasic()
 
 # GenAIクライアントを初期化
 client = genai.Client(api_key=GENAI_API_KEY)
@@ -44,6 +50,24 @@ class GenerateResponse(BaseModel):
     result: str
 
 
+def verify_auth(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    """
+    HTTP Basic認証を検証
+    CORS許可オリジンからはスキップ、外部からは認証が必要
+    """
+    origin = request.headers.get("origin")
+    
+    # CORS許可オリジンならスキップ
+    if origin and origin in CORS_ORIGINS:
+        return True
+    
+    # 外部からのリクエストは認証が必要
+    if credentials.username == AUTH_USERNAME and credentials.password == AUTH_PASSWORD:
+        return True
+    
+    raise HTTPException(status_code=401, detail="認証失敗")
+
+
 @app.get("/health")
 def health_check():
     """ヘルスチェック"""
@@ -51,12 +75,18 @@ def health_check():
 
 
 @app.post("/generate", response_model=GenerateResponse)
-def generate_text(request: GenerateRequest):
+def generate_text(
+    request_body: GenerateRequest,
+    request: Request,
+    auth: bool = Depends(verify_auth)
+):
     """
     GenAIを使用してテキストを生成（最大30回リトライ）
     
     Args:
-        request: GenerateRequest
+        request_body: GenerateRequest
+        request: HTTPリクエスト
+        auth: 認証結果
         
     Returns:
         GenerateResponse
@@ -68,7 +98,7 @@ def generate_text(request: GenerateRequest):
         try:
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
-                contents=request.prompt,
+                contents=request_body.prompt,
             )
             
             return GenerateResponse(result=response.text)
