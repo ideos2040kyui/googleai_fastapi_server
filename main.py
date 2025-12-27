@@ -33,7 +33,7 @@ app = FastAPI(title="GenAI FastAPI Server")
 # CORS設定（必要に応じて調整）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
