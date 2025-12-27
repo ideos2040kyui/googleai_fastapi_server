@@ -15,7 +15,7 @@ if not GENAI_API_KEY:
 
 # CORS設定用のオリジンを環境変数から取得（デフォルトはlocalhost）
 default_origins = [
-    "http://localhost",
+    "http://localhost:50000",
     "http://127.0.0.1",
 ]
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
@@ -33,7 +33,7 @@ app = FastAPI(title="GenAI FastAPI Server")
 # CORS設定（必要に応じて調整）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
