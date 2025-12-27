@@ -73,6 +73,9 @@ def health_check():
     """ヘルスチェック"""
     return {"status": "ok"}
 
+@app.options("/generate")
+async def options_handler():
+    return {}  # 認証なしで 200 OK を返す
 
 @app.post("/generate", response_model=GenerateResponse)
 def generate_text(
