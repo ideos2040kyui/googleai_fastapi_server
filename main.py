@@ -37,8 +37,6 @@ app.add_middleware(
 class GenerateRequest(BaseModel):
     """テキスト生成リクエストモデル"""
     prompt: str
-    max_tokens: int = 256
-    temperature: float = 0.7
 
 
 class GenerateResponse(BaseModel):
@@ -55,7 +53,7 @@ def health_check():
 @app.post("/generate", response_model=GenerateResponse)
 def generate_text(request: GenerateRequest):
     """
-    GenAIを使用してテキストを生成
+    GenAIを使用してテキストを生成（最大30回リトライ）
     
     Args:
         request: GenerateRequest
@@ -63,15 +61,22 @@ def generate_text(request: GenerateRequest):
     Returns:
         GenerateResponse
     """
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=request.prompt,
-        )
-        
-        return GenerateResponse(result=response.text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    max_retries = 30
+    last_exception = None
+    
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=request.prompt,
+            )
+            
+            return GenerateResponse(result=response.text)
+        except Exception as e:
+            last_exception = e
+            print(f"Attempt {attempt + 1}/{max_retries} failed: {str(e)}")
+            if attempt == max_retries - 1:
+                raise HTTPException(status_code=500, detail=f"Failed after {max_retries} attempts: {str(last_exception)}")
 
 
 if __name__ == "__main__":
