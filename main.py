@@ -56,6 +56,7 @@ def verify_auth(request: Request, credentials: HTTPBasicCredentials = Depends(se
     CORS許可オリジンからはスキップ、外部からは認証が必要
     """
     origin = request.headers.get("origin")
+    print(f"DEBUG: origin={origin}, CORS_ORIGINS={CORS_ORIGINS}")  # デバッグ出力
     
     # CORS許可オリジンならスキップ
     if origin and origin in CORS_ORIGINS:
@@ -78,6 +79,7 @@ def health_check():
 def generate_text(
     request_body: GenerateRequest,
     request: Request,
+    auth: bool = Depends(verify_auth)
 ):
     """
     GenAIを使用してテキストを生成（最大30回リトライ）
