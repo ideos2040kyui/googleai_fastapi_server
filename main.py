@@ -73,15 +73,11 @@ def health_check():
     """ヘルスチェック"""
     return {"status": "ok"}
 
-@app.options("/generate")
-async def options_handler():
-    return {}  # 認証なしで 200 OK を返す
 
 @app.post("/generate", response_model=GenerateResponse)
 def generate_text(
     request_body: GenerateRequest,
     request: Request,
-    auth: bool = Depends(verify_auth)
 ):
     """
     GenAIを使用してテキストを生成（最大30回リトライ）
