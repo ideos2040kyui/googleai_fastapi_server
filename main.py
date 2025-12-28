@@ -56,7 +56,6 @@ def verify_auth(request: Request, credentials: HTTPBasicCredentials = Depends(se
     CORS許可オリジンからはスキップ、外部からは認証が必要
     """
     origin = request.headers.get("origin")
-    print(f"DEBUG: origin={origin}, CORS_ORIGINS={CORS_ORIGINS}")  # デバッグ出力
     
     # CORS許可オリジンならスキップ
     if origin and origin in CORS_ORIGINS:
