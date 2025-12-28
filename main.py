@@ -1,5 +1,4 @@
 import os
-import asyncio
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -79,7 +78,7 @@ async def options_handler():
     return {}  # 認証なしで 200 OK を返す
 
 @app.post("/generate", response_model=GenerateResponse)
-async def generate_text(
+def generate_text(
     request_body: GenerateRequest,
     request: Request,
     auth: bool = Depends(verify_auth)
@@ -100,12 +99,9 @@ async def generate_text(
     
     for attempt in range(max_retries):
         try:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                client.models.generate_content,
-                "gemini-2.5-flash",
-                request_body.prompt
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=request_body.prompt,
             )
             
             return GenerateResponse(result=response.text)
