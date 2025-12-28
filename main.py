@@ -15,8 +15,8 @@ if not GENAI_API_KEY:
 
 # CORS設定用のオリジンを環境変数から取得（デフォルトはlocalhost）
 default_origins = [
-    "http://localhost:50000",
-    "http://127.0.0.1",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
 ]
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
 
@@ -112,5 +112,4 @@ def generate_text(
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
