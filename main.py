@@ -1,4 +1,5 @@
 import os
+import asyncio
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,7 +34,7 @@ app = FastAPI(title="GenAI FastAPI Server")
 # CORS設定（必要に応じて調整）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -78,7 +79,7 @@ async def options_handler():
     return {}  # 認証なしで 200 OK を返す
 
 @app.post("/generate", response_model=GenerateResponse)
-def generate_text(
+async def generate_text(
     request_body: GenerateRequest,
     request: Request,
     auth: bool = Depends(verify_auth)
@@ -99,9 +100,12 @@ def generate_text(
     
     for attempt in range(max_retries):
         try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=request_body.prompt,
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                client.models.generate_content,
+                "gemini-2.5-flash",
+                request_body.prompt
             )
             
             return GenerateResponse(result=response.text)
